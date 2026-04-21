@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include "Entry.h"
+#include "Cipher.h"
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -10,6 +11,7 @@
 class VaultManager
 {
 private:
+    Cipher cipher;
     std::vector<Entry> entries;
 public:
     VaultManager() {};
@@ -42,21 +44,21 @@ public:
     }
 
     std::string hex_to_string(const std::string& hex_string) {
-    std::stringstream text;
-    for (int i = 0; i < hex_string.size(); i += 2) {
-        std::string sub = hex_string.substr(i, 2);
-        unsigned char ch = std::stoi(sub, 0, 16);
-        text << ch;
+        std::stringstream text;
+        for (int i = 0; i < hex_string.size(); i += 2) {
+            std::string sub = hex_string.substr(i, 2);
+            unsigned char ch = std::stoi(sub, 0, 16);
+            text << ch;
+        }
+        return text.str();
     }
-    return text.str();
-}
 
     void save_to_file() {
         std::ofstream out("passwords.txt");
         if (out.is_open()){
             for (int i = 0; i < entries.size(); i++) { 
                 out << string_to_hex(entries[i].get_service()) << std::endl 
-                << string_to_hex(entries[i].get_login()) << std::endl
+                << string_to_hex(cipher.encrypt(entries[i].get_login())) << std::endl
                 << string_to_hex(entries[i].get_password()) << std::endl
                 << string_to_hex(entries[i].get_date()) << std::endl;
             }
