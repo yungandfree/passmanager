@@ -22,7 +22,7 @@ public:
         }
     }
 
-    std::vector<Entry> get_all() {return entries;}
+    std::vector<Entry>& get_all() {return entries;}
     Entry* find_info(std::string service) {
         for (int i = 0; i < entries.size(); i++) {
             if (entries[i].get_service() == service) {
@@ -68,6 +68,8 @@ public:
         if (in.is_open()){
             std::string service_hex, login_hex, password_hex, date_hex;
 
+            entries.clear();
+
             while (std::getline(in, service_hex) && std::getline(in, login_hex) &&
             std::getline(in, password_hex) && std::getline(in, date_hex)) {
                 
@@ -81,4 +83,3 @@ public:
         }
     }
 };
-

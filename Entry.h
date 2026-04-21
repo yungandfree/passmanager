@@ -24,6 +24,10 @@ public:
     Entry(std::string service, std::string login, std::string password):
     service(service), login(login), password(password), date(current_time_to_string())
     {};
+
+    Entry(std::string service, std::string login, std::string password, std::string date):
+    service(service), login(login), password(password), date(date)
+    {};
     
     ~Entry() {};
     
