@@ -2,6 +2,22 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <random>
+
+namespace {
+    std::string generate_random_password(int length = 16) {
+        const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?";
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<size_t> dist(0, charset.size() - 1);
+        std::string password;
+        for (int i = 0; i < length; ++i) {
+            password += charset[dist(gen)];
+        }
+        return password;
+    }
+}
 
 MenuHandler::MenuHandler() {}
 
@@ -9,24 +25,47 @@ void MenuHandler::request_master_password() {
     int attempts = 0;
     const int max_attempts = 3;
 
+    std::ifstream test_file("passwords.txt");
+    bool is_first_run = !test_file.good();
+    test_file.close();
+
     while (attempts < max_attempts) {
-        std::cout << "Введите мастер-пароль: ";
         std::string pwd;
-        std::getline(std::cin, pwd);
+
+        if (is_first_run && attempts == 0) {
+            std::cout << "Обнаружен первый запуск программы.\n";
+            std::cout << "Хотите сгенерировать случайный мастер-пароль? (y/n): ";
+            std::string choice;
+            std::getline(std::cin, choice);
+            if (choice == "y" || choice == "Y") {
+                pwd = generate_random_password(16);
+                std::cout << "\n========================================\n";
+                std::cout << "Сгенерированный мастер-пароль:\n";
+                std::cout << pwd << "\n";
+                std::cout << "========================================\n";
+                std::cout << "ОБЯЗАТЕЛЬНО СОХРАНИТЕ ЕГО!\n";
+                std::cout << "Нажмите Enter для входа с этим паролем...";
+                std::string temp;
+                std::getline(std::cin, temp);
+            }
+        }
+
+        if (pwd.empty()) {
+            std::cout << "Введите мастер-пароль: ";
+            std::getline(std::cin, pwd);
+        }
 
         if (pwd.empty()) {
             std::cout << "Пароль не может быть пустым.\n";
             continue;
         }
 
-        // Нормализация пароля до 16 байт (128 бит)
         std::array<unsigned char, 16> key;
         key.fill(0);
         for (size_t i = 0; i < pwd.size() && i < 16; ++i) {
             key[i] = static_cast<unsigned char>(pwd[i]);
         }
 
-        // Зануляем строку пароля в памяти
         std::fill(pwd.begin(), pwd.end(), '\0');
 
         vault.set_session_key(key);
@@ -68,7 +107,6 @@ void MenuHandler::add_entry() {
         return;
     }
 
-    // Проверяем, существует ли сервис
     std::vector<int> matches = vault.find_all_by_service(service);
     if (!matches.empty()) {
         auto& entries = vault.get_all();
@@ -89,7 +127,6 @@ void MenuHandler::add_entry() {
         std::getline(std::cin, choice);
 
         if (choice == "b" || choice == "B") {
-            // Смена пароля для выбранного аккаунта
             int target_index;
             if (matches.size() == 1) {
                 target_index = matches[0];
@@ -119,7 +156,6 @@ void MenuHandler::add_entry() {
             std::cout << "Отмена.\n";
             return;
         }
-        // Если выбрали "a" — продолжаем добавление нового аккаунта
     }
 
     std::string login, password;

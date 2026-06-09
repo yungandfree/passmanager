@@ -65,11 +65,9 @@ std::vector<unsigned char> VaultManager::hex_to_vector(const std::string& hex_st
 void VaultManager::save_to_file() {
     std::ofstream out("passwords.txt");
     if (out.is_open()) {
-        // Строка 1: контрольная фраза (зашифрованная с солью)
         std::vector<unsigned char> enc_check = cipher.encrypt(CHECK_PHRASE, session_key);
         out << vector_to_hex(enc_check) << std::endl;
 
-        // Записи: 4 строки на каждую (сервис, логин, пароль, дата)
         for (size_t i = 0; i < entries.size(); i++) {
             std::vector<unsigned char> enc_service  = cipher.encrypt(entries[i].get_service(), session_key);
             std::vector<unsigned char> enc_login    = cipher.encrypt(entries[i].get_login(), session_key);
@@ -87,23 +85,21 @@ void VaultManager::save_to_file() {
 bool VaultManager::load_from_file() {
     std::ifstream in("passwords.txt");
     if (!in.is_open()) {
-        return true; // Файла нет — первый запуск, пароль принимается
+        return true;
     }
 
-    // Строка 1: контрольная фраза
     std::string check_hex;
     if (!std::getline(in, check_hex) || check_hex.empty()) {
-        return true; // Пустой файл — первый запуск
+        return true;
     }
 
     std::vector<unsigned char> enc_check = hex_to_vector(check_hex);
     std::string decrypted_check = cipher.decrypt(enc_check, session_key);
 
     if (decrypted_check != CHECK_PHRASE) {
-        return false; // Неверный мастер-пароль
+        return false;
     }
 
-    // Загрузка записей
     entries.clear();
     std::string service_hex, login_hex, password_hex, date_hex;
 

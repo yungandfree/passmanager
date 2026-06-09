@@ -92,9 +92,22 @@ void Cipher::InvSubBytes(unsigned char state[4][4]) {
 
 void Cipher::ShiftRows(unsigned char state[4][4]) {
     unsigned char temp;
-    temp = state[1][0]; state[1][0] = state[1][1]; state[1][1] = state[1][2]; state[1][2] = state[1][3]; state[1][3] = temp;
-    temp = state[2][0]; state[2][0] = state[2][2]; state[2][2] = temp; temp = state[2][1]; state[2][1] = state[2][3]; state[2][3] = temp;
-    temp = state[3][3]; state[3][3] = state[3][2]; state[3][2] = state[3][1]; state[3][1] = state[3][0]; state[3][0] = temp;
+    temp = state[1][0]; 
+    state[1][0] = state[1][1]; 
+    state[1][1] = state[1][2]; 
+    state[1][2] = state[1][3]; 
+    state[1][3] = temp;
+    temp = state[2][0]; 
+    state[2][0] = state[2][2]; 
+    state[2][2] = temp; 
+    temp = state[2][1]; 
+    state[2][1] = state[2][3]; 
+    state[2][3] = temp;
+    temp = state[3][3]; 
+    state[3][3] = state[3][2]; 
+    state[3][2] = state[3][1]; 
+    state[3][1] = state[3][0]; 
+    state[3][0] = temp;
 }
 
 void Cipher::InvShiftRows(unsigned char state[4][4]) {
@@ -166,12 +179,10 @@ void Cipher::KeyExpansion(std::array<unsigned char, 16> key) {
 std::vector<unsigned char> Cipher::encrypt(const std::string& data, const std::array<unsigned char, 16>& key) {
     KeyExpansion(key);
 
-    // Генерируем соль и склеиваем: [соль] + [открытый текст]
     std::vector<unsigned char> salt = generate_salt();
     std::vector<unsigned char> salted_data(salt.begin(), salt.end());
     salted_data.insert(salted_data.end(), data.begin(), data.end());
 
-    // PKCS#7 паддинг
     std::vector<unsigned char> padded = add_padding(salted_data);
 
     std::vector<unsigned char> result;
@@ -230,7 +241,6 @@ std::string Cipher::decrypt(const std::vector<unsigned char>& encryptedtext, con
                 result.push_back(state[j][i]);
     }
 
-    // Снятие PKCS#7 паддинга
     if (!result.empty()) {
         unsigned char pad_val = result.back();
         if (pad_val > 0 && pad_val <= 16) {
@@ -238,7 +248,6 @@ std::string Cipher::decrypt(const std::vector<unsigned char>& encryptedtext, con
         }
     }
 
-    // Отрезаем соль (первые SALT_LEN байт)
     if (result.size() > SALT_LEN) {
         return std::string(result.begin() + SALT_LEN, result.end());
     }
